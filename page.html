@@ -1,0 +1,113 @@
+<html>
+
+<head>
+    <title>
+        SimpleAnonChat
+    </title>
+    <style>
+        input {
+            width: 45%;
+        }
+
+        div {
+            padding: 2px;
+            margin: 5px;
+        }
+
+        span {
+            padding: 1px;
+            margin: 3px;
+        }
+
+        .button {
+            padding: 2px;
+            border: 2px rgba(112, 112, 112, 0.548) solid;
+            background-color: rgba(201, 198, 198, 0.548);
+            margin: 8px;
+        }
+
+        .myname {
+            color: rgb(5, 228, 16);
+        }
+
+        .peername {
+            color: rgb(93, 17, 235);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mypeerid"></div>
+    <div id="remotepeer"><input id="remotepeerid" type="text"><a class="button" id="connecttoremote">Connect</a></div>
+    <div id="chatbox"><input id="messagetosend" type="text"><a class="button" id="sendmessage">Send</a></div>
+    <div id="chatbody"></div>
+    <script src="peerjs.min.js"></script>
+    <script src="jquery-3.7.1.min.js"></script>
+    <script>
+        let rconn;
+        let mypeerid;
+        var peer = new Peer();
+        peer.on('open', function (id) {
+            console.log('My peer ID is: ' + id);
+            $('#mypeerid').text("MyID :: " + id);
+            mypeerid = id;
+        });
+
+        function sendSome(conn, data) {
+            conn.send(data);
+            $('#chatbody').append('<span><span class="myname">' + mypeerid + '</span> : ' + data + '</span><br/>');
+        }
+
+        function recvSome(conn, data) {
+            $('#chatbody').append('<span><span class="peername">' + conn.peer + '</span> : ' + data + '</span><br/>');
+        }
+
+        $('#messagetosend').on("keyup", function (e) {
+            if (e.originalEvent.which == 13) {
+                $('#sendmessage').click();
+            }
+        });
+
+        $('#sendmessage').on('click', function () {
+            sendSome(rconn, $('#messagetosend').val());
+            $('#messagetosend').val("");
+            $('#messagetosend').focus();
+        });
+
+        $('#connecttoremote').on('click', function () {
+            rconn = peer.connect($('#remotepeerid').val());
+            rconn.on('open', function () {
+                sendSome(rconn, 'Hi!');
+                rconn.on('data', function (data) {
+                    recvSome(rconn, data);
+                });
+
+            });
+            rconn.on('error', function (data) {
+                recvSome({ peer: "SYSMSG" }, data);
+            });
+            rconn.on('close', function (data) {
+                recvSome(rconn, " left");
+            });
+        });
+
+        peer.on('connection', function (lconn) {
+            rconn = lconn;
+            lconn.on('open', function () {
+                sendSome(lconn, 'Hello!');
+                lconn.on('data', function (data) {
+                    recvSome(lconn, data);
+                });
+            });
+            lconn.on('error', function (data) {
+                recvSome({ peer: "SYSMSG" }, data);
+            });
+            lconn.on('close', function (data) {
+                recvSome(lconn, " left");
+            });
+        });
+
+    </script>
+</body>
+
+</html>
