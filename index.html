@@ -89,6 +89,9 @@
             rconn.on('close', function (data) {
                 recvSome(rconn, " left");
             });
+            rconn.on('disconnect', function (data) {
+                recvSome(rconn, " disconnect");
+            });
         });
 
         peer.on('connection', function (lconn) {
@@ -104,6 +107,9 @@
             });
             lconn.on('close', function (data) {
                 recvSome(lconn, " left");
+            });
+            lconn.on('disconnect', function (data) {
+                recvSome(rconn, " disconnect");
             });
         });
 
